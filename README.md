@@ -9,3 +9,8 @@ This plugin downloads whitelist from url and adds players to ComfyWhitelist
 ### Other permissions:
 * `webwhitelist.command` - allow usage of command
 * `webwhitelist.*` - grants all permissions above
+
+Whitelist format is json list like:
+```json
+["player1", "player2"]
+```
