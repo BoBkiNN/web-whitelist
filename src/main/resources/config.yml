@@ -1,0 +1,17 @@
+url: ""
+delay: 300 # 5 minutes
+timeout: 5 # 5 seconds
+additional-meta: true # plugin will send server metadata as headers
+
+messages:
+  reload-failed: "&cFailed to reload: {}"
+  reload-success: "&aSuccessfully reloaded"
+  no-access: "&cUnknown command"
+  status-enabled: "&aAuto-update is &6enabled"
+  status-disabled: "&aAuto-update is &6disabled"
+  last-successful-request: "&6Last successful request: &e{}&6 seconds ago"
+  switch-enabled: "&aAuto-update is now &6enabled"
+  switch-disabled: "&aAuto-update is now &6disabled"
+  update-failed: "&cFailed to force-update: {}"
+  update-success: "&aSuccessfully force-updated"
+  update-waiting: "&6Updating.."

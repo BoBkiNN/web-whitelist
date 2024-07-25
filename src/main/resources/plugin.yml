@@ -1,0 +1,31 @@
+name: web-whitelist
+version: '${project.version}'
+main: xyz.bobkinn.webwhitelist.Main
+api-version: '1.16'
+authors: [BoBkiNN]
+depend: ["ComfyWhitelist"]
+
+commands:
+  webwhitelist:
+    description: WebWhitelist command
+    aliases: ["webwl"]
+    permission: webwhitelist.command
+permissions:
+  webwhitelist.*:
+    default: op
+    children:
+      webwhitelist.command: true
+      webwhitelist.update: true
+      webwhitelist.status: true
+      webwhitelist.reload: true
+      webwhitelist.switch: true
+  webwhitelist.command:
+    default: op
+  webwhitelist.update:
+    default: op
+  webwhitelist.status:
+    default: op
+  webwhitelist.reload:
+    default: op
+  webwhitelist.switch:
+    default: op
