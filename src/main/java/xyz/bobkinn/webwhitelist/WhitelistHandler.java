@@ -18,17 +18,4 @@ public abstract class WhitelistHandler {
     public abstract Set<String> asList();
 
     public abstract boolean isWhitelisted(String player);
-
-    public void handleDiff(WhitelistDiff diff){
-        var added = diff.added();
-        var removed = diff.removed();
-        added.forEach(n -> {
-            if (n.isBlank()) return;
-            if (!add(n)) Main.LOGGER.info("Failed to add '{}'", n);
-        });
-        removed.forEach(n -> {
-            if (n.isBlank()) return;
-            if (!remove(n)) Main.LOGGER.info("Failed to remove '{}'", n);
-        });
-    }
 }

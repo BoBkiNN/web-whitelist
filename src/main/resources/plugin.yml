@@ -15,17 +15,11 @@ permissions:
     default: op
     children:
       webwhitelist.command: true
-      webwhitelist.update: true
       webwhitelist.status: true
       webwhitelist.reload: true
-      webwhitelist.switch: true
   webwhitelist.command:
-    default: op
-  webwhitelist.update:
     default: op
   webwhitelist.status:
     default: op
   webwhitelist.reload:
-    default: op
-  webwhitelist.switch:
     default: op

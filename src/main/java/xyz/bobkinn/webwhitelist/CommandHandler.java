@@ -1,6 +1,7 @@
 package xyz.bobkinn.webwhitelist;
 
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,9 +17,8 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
     private final Main plugin;
     private final Map<String, SubCommand> subs = Map.of(
             "reload", this::reload,
-            "status", this::status,
-            "switch", this::switchSub,
-            "update", this::updateSub);
+            "status", this::status
+    );
 
     public interface SubCommand {
         void execute(CommandSender sender);
@@ -38,43 +38,26 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
         }
     }
 
+
+
+    public Component getLogText(ModifyLog log){
+         final String additional;
+         if (log.action().getAdditionalKey() != null) {
+             additional = Main.replaceArgs(plugin.getRawTranslate(log.action().getAdditionalKey()), log.players());
+         } else {
+             additional = "";
+         }
+         final String time = plugin.formatMillis(log.timestamp());
+         return plugin.getTranslate("status-log-entry", time, log.action().name(), additional);
+    }
+
     public void status(CommandSender sender){
-        if (plugin.isEnableUpdates()) {
-            sender.sendMessage(plugin.getTranslate("status-enabled"));
-        } else {
-            sender.sendMessage(plugin.getTranslate("status-disabled"));
+        sender.sendMessage(plugin.getTranslate("status-state", plugin.getWs().getReadyState().name()));
+        var logs = plugin.getLogs();
+        if (logs.isEmpty()) return;
+        for (var log : logs) {
+            sender.sendMessage(getLogText(log));
         }
-        var lastSuccess = plugin.getRequester().lastSuccessfully();
-        if (lastSuccess != -1) { // there were no successful requests
-            var delta = System.currentTimeMillis() - lastSuccess;
-            sender.sendMessage(plugin.getTranslate("last-successful-request",  (int) delta / 1000));
-        }
-    }
-
-    public void switchSub(CommandSender sender){
-        var newState = !plugin.isEnableUpdates();
-        plugin.setEnableUpdates(newState);
-        if (newState) {
-            plugin.getRequester().start();
-            sender.sendMessage(plugin.getTranslate("switch-enabled"));
-        } else {
-            plugin.getRequester().stop();
-            sender.sendMessage(plugin.getTranslate("switch-disabled"));
-        }
-        plugin.saveData();
-    }
-
-    public void updateSub(CommandSender sender){
-        sender.sendMessage(plugin.getTranslate("update-waiting"));
-        if (plugin.getRequester() == null) return;
-        plugin.getRequester().request(e -> {
-            if (e == null) {
-                sender.sendMessage(plugin.getTranslate("update-success"));
-            } else {
-                Main.LOGGER.debug("Failed to force-update", e);
-                sender.sendMessage(plugin.getTranslate("update-failed", e.getMessage()));
-            }
-        });
     }
 
     @Override

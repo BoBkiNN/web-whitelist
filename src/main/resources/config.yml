@@ -1,17 +1,16 @@
 url: ""
-delay: 300 # 5 minutes
 timeout: 5 # 5 seconds
 additional-meta: true # plugin will send server metadata as headers
+reconnect-delay: 60 # 1 minute
+time-format: "dd-MM HH:mm:ss"
+time-zone: "Europe/Moscow"
 
 messages:
   reload-failed: "&cFailed to reload: {}"
   reload-success: "&aSuccessfully reloaded"
   no-access: "&cUnknown command"
-  status-enabled: "&aAuto-update is &6enabled"
-  status-disabled: "&aAuto-update is &6disabled"
-  last-successful-request: "&6Last successful request: &e{}&6 seconds ago"
-  switch-enabled: "&aAuto-update is now &6enabled"
-  switch-disabled: "&aAuto-update is now &6disabled"
-  update-failed: "&cFailed to force-update: {}"
-  update-success: "&aSuccessfully force-updated"
-  update-waiting: "&6Updating.."
+  status-state: "&aConnection state: &6{}"
+  status-log-top: "&aLast 15 logs:"
+  status-log-entry: "&7{} &8- {}{}" # time, type, additional
+  status-log-added: " &a+{}"
+  status-log-removed: " &a+{}"

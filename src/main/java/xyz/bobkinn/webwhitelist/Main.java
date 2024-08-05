@@ -1,23 +1,20 @@
 package xyz.bobkinn.webwhitelist;
 
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
-import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,34 +27,61 @@ public final class Main extends JavaPlugin {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private WhitelistHandler handler = null;
-    private final Requester requester = new Requester(this);
-    @Setter
-    private boolean enableUpdates = true;
+    private PluginClient ws = null;
+    private final RollingList<ModifyLog> logs = new RollingList<>(15);
+    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM HH:mm:ss");
+    private ZoneId timeZone = ZoneId.systemDefault();
 
-    public static WhitelistDiff createDiff(Set<String> n, Set<String> existing){
-        var added = new HashSet<>(n);
-        var removed = new HashSet<>(existing);
-        added.removeAll(existing);
-        removed.removeAll(n);
-        return new WhitelistDiff(added, removed);
+    public static String formatMillis(long millis, DateTimeFormatter formatter, ZoneId zoneId) {
+        // Create an Instant from the milliseconds
+        Instant instant = Instant.ofEpochMilli(millis);
+        // Create a ZonedDateTime from the Instant and ZoneId
+        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, zoneId);
+        // Format the ZonedDateTime to the desired format
+        return zonedDateTime.format(formatter);
     }
 
-    public void handleResponse(Set<String> players){
-        var current = handler.asList();
-        var diff = createDiff(players, current);
-        if (diff.isEmpty()) return;
-        try {
-            handler.handleDiff(diff);
-            LOGGER.info("Updated whitelist with {} addition(s) and {} deletion(s)", diff.added().size(), diff.removed().size());
-        } catch (Exception e){
-            LOGGER.error("Failed to handle whitelist update", e);
-            throw new RuntimeException("Failed to handle whitelist update", e);
+    public String formatMillis(long millis) {
+        return formatMillis(millis, dateTimeFormatter, timeZone);
+    }
+
+    public void addLog(ModifyLog.Action action, Set<String> players){
+        logs.add(new ModifyLog(System.currentTimeMillis(), action, players));
+    }
+
+    public static String replaceArgs(String text, Object... args) {
+        StringBuilder result = new StringBuilder();
+        int argIndex = 0;
+        int i = 0;
+
+        while (i < text.length()) {
+            if (text.charAt(i) == '\\' && i + 1 < text.length() && text.charAt(i + 1) == '{') {
+                result.append('{');
+                i += 2; // Skip escaped brace
+            } else if (text.charAt(i) == '{' && i + 1 < text.length() && text.charAt(i + 1) == '}') {
+                if (argIndex < args.length) {
+                    result.append(args[argIndex++]);
+                } else {
+                    result.append("{}"); // If no arguments left, leave as is
+                }
+                i += 2; // Skip braces
+            } else {
+                result.append(text.charAt(i));
+                i++;
+            }
         }
+
+        return result.toString();
     }
 
-    public Component getTranslate(String key, Object arg){
-        var msg = getConfig().getString("messages."+key, "{"+key+"}").replace("{}", String.valueOf(arg));
-        return COMPONENT_SERIALIZER.deserialize(msg);
+    public Component getTranslate(String key, Object... args){
+        var msg = getConfig().getString("messages."+key, "{"+key+"}");
+        var rl = replaceArgs(msg, args);
+        return COMPONENT_SERIALIZER.deserialize(rl);
+    }
+
+    public String getRawTranslate(String key){
+        return getConfig().getString("messages."+key, "{"+key+"}");
     }
 
     public Component getTranslate(String key){
@@ -65,39 +89,9 @@ public final class Main extends JavaPlugin {
         return COMPONENT_SERIALIZER.deserialize(msg);
     }
 
-    public void saveData(){
-        var file = new File(getDataFolder(), "data.json");
-        if (!getDataFolder().isDirectory()) if (!getDataFolder().mkdirs()) {
-            LOGGER.warn("Failed to mkdir data folder");
-            return;
-        }
-        var map = new HashMap<String, Object>();
-        map.put("enableUpdates", enableUpdates);
-        try (var fw = new FileWriter(file)){
-            GSON.toJson(map, DATA_TYPETOKEN.getType(), fw);
-        } catch (Exception e) {
-            LOGGER.error("Failed to save data", e);
-        }
-    }
-
-    public void reloadData(){
-        var file = new File(getDataFolder(), "data.json");
-        if (!file.isFile()) {
-            saveData();
-            return;
-        }
-        try (var fr = new FileReader(file, Charsets.UTF_8)){
-            var map = GSON.fromJson(fr, DATA_TYPETOKEN);
-            enableUpdates = (boolean) map.getOrDefault("enableUpdates", true);
-        } catch (Exception e) {
-            LOGGER.error("Failed to load data", e);
-        }
-    }
-
     public void reload(){
         saveDefaultConfig();
         reloadConfig();
-        reloadData();
         var url = getConfig().getString("url");
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("Missing 'url' value in config");
@@ -108,12 +102,19 @@ public final class Main extends JavaPlugin {
         } catch (IllegalArgumentException e){
             throw new IllegalArgumentException("Failed to parse url");
         }
-        var delay = getConfig().getInt("delay", 300);
-        var timeout = getConfig().getInt("timeout", 5);
-        requester.reload(uri, delay, timeout);
-        if (enableUpdates && !requester.isUpdating()) {
-            requester.start();
+        try {
+            dateTimeFormatter = DateTimeFormatter.ofPattern(getConfig().getString("time-format", "dd-MM HH:mm:ss"));
+        } catch (Exception e) {
+            dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM HH:mm:ss");
         }
+        try {
+            timeZone = ZoneId.of(getConfig().getString("time-zone", ZoneId.systemDefault().toString()));
+        } catch (Exception e) {
+            timeZone = ZoneId.systemDefault();
+        }
+        var timeout = getConfig().getInt("timeout", 5);
+        var reconnectDelay = getConfig().getInt("reconnect-delay", 60);
+        ws = new PluginClient(this, uri, handler, timeout, reconnectDelay);
     }
 
     @Override
@@ -133,11 +134,17 @@ public final class Main extends JavaPlugin {
             command.setExecutor(ex);
             command.setTabCompleter(ex);
         }
+        if (ws != null) ws.connect();
     }
 
     @Override
     public void onDisable() {
-        requester.stop();
-        saveData();
+        if (ws != null && ws.isOpen()) {
+            try {
+                ws.closeBlocking();
+            } catch (Exception e) {
+                LOGGER.error("Failed to close websocket connection", e);
+            }
+        }
     }
 }
