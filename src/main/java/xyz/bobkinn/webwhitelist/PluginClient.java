@@ -108,6 +108,7 @@ public class PluginClient extends WebSocketClient {
     public void onOpen(ServerHandshake handshake) {
         Main.LOGGER.info("Connected to {}", getURI());
         plugin.addLog(ActionLog.Action.CONNECT, new HashSet<>(0));
+        onInfo(null);
     }
 
     @Override
