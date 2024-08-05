@@ -12,10 +12,7 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.ConnectException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -74,15 +71,19 @@ public class PluginClient extends WebSocketClient {
         if (players == null) {
             throw new IllegalArgumentException("players field not found");
         }
-        var success = true;
+        var failed = new ArrayList<String>(players.size());
         for (var p : players) {
-            if (!whitelist.remove(p)) success = false;
+            if (!whitelist.remove(p)) {
+                failed.add(p);
+            }
         }
         plugin.addLog(ActionLog.Action.REMOVED, new HashSet<>(players));
-        if (success) {
+        if (failed.isEmpty()) {
             send(DataHolder.ofSuccess("remove"));
         } else {
-            throw new IllegalStateException("Failed to remove some players to whitelist");
+            var e = new IllegalStateException("Failed to remove some players to whitelist");
+            send(DataHolder.ofError("remove", e, Map.of("players", failed)));
+            Main.LOGGER.warn("Failed to remove some players to whitelist: {}", failed);
         }
     }
 
@@ -97,15 +98,19 @@ public class PluginClient extends WebSocketClient {
         if (players == null) {
             throw new IllegalArgumentException("players field not found");
         }
-        var success = true;
+        var failed = new ArrayList<String>(players.size());
         for (var p : players) {
-            if (!whitelist.add(p)) success = false;
+            if (!whitelist.add(p)) {
+                failed.add(p);
+            }
         }
         plugin.addLog(ActionLog.Action.ADDED, new HashSet<>(players));
-        if (success) {
+        if (failed.isEmpty()) {
             send(DataHolder.ofSuccess("add"));
         } else {
-            throw new IllegalStateException("Failed to add some players to whitelist");
+            var e = new IllegalStateException("Failed to add some players to whitelist");
+            send(DataHolder.ofError("add", e, Map.of("players", failed)));
+            Main.LOGGER.warn("Failed to add some players to whitelist: {}", failed);
         }
     }
 
@@ -143,7 +148,7 @@ public class PluginClient extends WebSocketClient {
             handler.handle(holder.getData());
         } catch (Exception e){
             send(DataHolder.ofError(type, e));
-            Main.LOGGER.error("Failed to handle data of type '{}'", type, e);
+            Main.LOGGER.error("Failed to handle message '{}'", type, e);
         }
     }
 
@@ -173,13 +178,13 @@ public class PluginClient extends WebSocketClient {
         failedTimes += 1;
         recalculateDelay();
         if (CloseFrame.NEVER_CONNECTED == code) {
-            Main.LOGGER.error("Failed to connect, reconnecting in {} seconds", reconnectDelay);
+            Main.LOGGER.warn("Failed to connect, reconnecting in {} seconds", reconnectDelay);
             plugin.addLog(ActionLog.Action.FAILED_TO_CONNECT, new HashSet<>(0));
         } else {
-            if (reason != null && reason.isBlank()) {
-                Main.LOGGER.info("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
+            if (reason != null && !reason.isBlank()) {
+                Main.LOGGER.warn("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
             } else {
-                Main.LOGGER.info("Websocket closed with code {}, reconnecting in {} seconds", code, reconnectDelay);
+                Main.LOGGER.warn("Websocket closed with code {}, reconnecting in {} seconds", code, reconnectDelay);
             }
             plugin.addLog(ActionLog.Action.DISCONNECTED, new HashSet<>(0));
         }

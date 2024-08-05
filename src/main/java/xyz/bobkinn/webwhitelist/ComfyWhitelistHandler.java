@@ -18,7 +18,9 @@ public class ComfyWhitelistHandler extends WhitelistHandler {
 
     @Override
     public boolean add(String player) {
-        return whitelist.addPlayer(player);
+        if (!isWhitelisted(player)) {
+            return whitelist.addPlayer(player);
+        } else return false;
     }
 
     @Override

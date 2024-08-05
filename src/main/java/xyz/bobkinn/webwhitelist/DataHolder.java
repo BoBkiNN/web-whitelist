@@ -38,12 +38,16 @@ public class DataHolder {
         }
     }
 
-    public static DataHolder ofError(String type, Exception e){
-        return ofError(type, e, true);
+    public static DataHolder ofError(String type, Exception e, Map<String, Object> extra){
+        return ofError(type, e, true, extra);
     }
 
-    public static DataHolder ofError(String type, Exception e, boolean recurse){
-        var map = new HashMap<String, Object>();
+    public static DataHolder ofError(String type, Exception e){
+        return ofError(type, e, true, Map.of());
+    }
+
+    public static DataHolder ofError(String type, Exception e, boolean recurse, Map<String, Object> extra){
+        var map = new HashMap<>(extra);
         map.put("success", false);
         if (e != null) {
             var errors = new ArrayList<Map<String, Object>>();
