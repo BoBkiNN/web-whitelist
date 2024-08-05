@@ -157,7 +157,8 @@ public class PluginClient extends WebSocketClient {
     }
 
     private void recalculateDelay(){
-        reconnectDelay = (int) (reconnectDelay * reconnectMultiplier) * failedTimes;
+        int add = (int) (baseReconnectDelay * reconnectMultiplier * (failedTimes-1));
+        reconnectDelay = baseReconnectDelay + add;
     }
 
     @Override
