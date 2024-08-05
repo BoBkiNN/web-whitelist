@@ -77,7 +77,9 @@ public class PluginClient extends WebSocketClient {
                 failed.add(p);
             }
         }
-        plugin.addLog(ActionLog.Action.REMOVED, new HashSet<>(players));
+        var modList = new ArrayList<>(players);
+        modList.removeAll(failed);
+        plugin.addLog(ActionLog.Action.REMOVED, new HashSet<>(modList));
         if (failed.isEmpty()) {
             send(DataHolder.ofSuccess("remove"));
         } else {
@@ -104,7 +106,9 @@ public class PluginClient extends WebSocketClient {
                 failed.add(p);
             }
         }
-        plugin.addLog(ActionLog.Action.ADDED, new HashSet<>(players));
+        var modList = new ArrayList<>(players);
+        modList.removeAll(failed);
+        plugin.addLog(ActionLog.Action.ADDED, new HashSet<>(modList));
         if (failed.isEmpty()) {
             send(DataHolder.ofSuccess("add"));
         } else {
