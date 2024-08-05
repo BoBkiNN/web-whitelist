@@ -91,11 +91,11 @@ C->S
 | logs           | list of logs    | list of latest 15 logs      |
 
 ### Log format
-| field     | field type           | description                                                                                               |
-|-----------|----------------------|-----------------------------------------------------------------------------------------------------------|
-| timestamp | long                 | log creation unix timestamp                                                                               |
-| action    | action               | action for this log.<br/>Might be one of: `ADD`, `REMOVE`, `CONNECT`, `DISCONNECTED`, `FAILED_TO_CONNECT` |
-| players   | list of player names | list of player names if `action` is `ADD` or `REMOVE`, else empty list                                    |
+| field     | field type           | description                                                                                                    |
+|-----------|----------------------|----------------------------------------------------------------------------------------------------------------|
+| timestamp | long                 | log creation unix timestamp                                                                                    |
+| action    | action               | action for this log.<br/>Might be one of: `ADDED`, `REMOVED`, `CONNECTED`, `DISCONNECTED`, `FAILED_TO_CONNECT` |
+| players   | list of player names | list of player names if `action` is `ADD` or `REMOVE`, else empty list                                         |
 
 ### Errors response
 When some message type cannot be processed or message type not found there will be errors with `success` set to `false`.

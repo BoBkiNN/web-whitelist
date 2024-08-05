@@ -17,9 +17,12 @@ permissions:
       webwhitelist.command: true
       webwhitelist.status: true
       webwhitelist.reload: true
+      webwhitelist.reconnect: true
   webwhitelist.command:
     default: op
   webwhitelist.status:
     default: op
   webwhitelist.reload:
+    default: op
+  webwhitelist.reconnect:
     default: op

@@ -17,7 +17,8 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
     private final Main plugin;
     private final Map<String, SubCommand> subs = Map.of(
             "reload", this::reload,
-            "status", this::status
+            "status", this::status,
+            "reconnect", this::reconnect
     );
 
     public interface SubCommand {
@@ -38,7 +39,10 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
         }
     }
 
-
+    public void reconnect(CommandSender sender){
+        sender.sendMessage(plugin.getTranslate("reconnecting"));
+        plugin.getWs().asyncReconnect(() -> sender.sendMessage(plugin.getTranslate("reconnected")));
+    }
 
     public Component getLogText(ActionLog log){
          final String additional;

@@ -1,6 +1,7 @@
 url: ""
 timeout: 5 # 5 seconds
 reconnect-delay: 60 # 1 minute
+reconnect-multiplier: 1.3
 time-format: "dd.MM HH:mm:ss"
 time-zone: "Europe/Moscow"
 
@@ -13,3 +14,5 @@ messages:
   status-log-entry: "&7{} &8- &6{}{}" # time, type, additional
   status-log-added: " &a+{}"
   status-log-removed: " &a+{}"
+  reconnecting: "&6Reconnecting.."
+  reconnected: "&aReconnected!"

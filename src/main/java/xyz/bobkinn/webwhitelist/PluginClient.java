@@ -5,9 +5,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.enums.ReadyState;
 import org.java_websocket.framing.CloseFrame;
 import org.java_websocket.handshake.ServerHandshake;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,13 +26,18 @@ public class PluginClient extends WebSocketClient {
     private final Map<String, MessageHandler> handlers;
     private final WhitelistHandler whitelist;
     private final Main plugin;
-    private final int reconnectDelay; // seconds
+    private final int baseReconnectDelay; // seconds
+    private final double reconnectMultiplier;
+    private int reconnectDelay;
+    private int failedTimes = 0;
 
-    public PluginClient(Main plugin, URI uri, WhitelistHandler whitelist, int timeout, int reconnectDelay) {
+    public PluginClient(Main plugin, URI uri, WhitelistHandler whitelist, int timeout, int baseReconnectDelay, double reconnectMultiplier) {
         super(uri, new Draft_6455(),null, (int) TimeUnit.SECONDS.toMillis(timeout));
         this.plugin = plugin;
         this.whitelist = whitelist;
-        this.reconnectDelay = reconnectDelay;
+        this.baseReconnectDelay = baseReconnectDelay;
+        this.reconnectMultiplier = reconnectMultiplier;
+        reconnectDelay = baseReconnectDelay;
         handlers = new HashMap<>();
         handlers.put("add", this::onAdd);
         handlers.put("remove", this::onRemove);
@@ -68,7 +75,7 @@ public class PluginClient extends WebSocketClient {
         for (var p : players) {
             if (!whitelist.remove(p)) success = false;
         }
-        plugin.addLog(ActionLog.Action.REMOVE, new HashSet<>(players));
+        plugin.addLog(ActionLog.Action.REMOVED, new HashSet<>(players));
         if (success) {
             send(DataHolder.ofSuccess("remove"));
         } else {
@@ -91,7 +98,7 @@ public class PluginClient extends WebSocketClient {
         for (var p : players) {
             if (!whitelist.add(p)) success = false;
         }
-        plugin.addLog(ActionLog.Action.ADD, new HashSet<>(players));
+        plugin.addLog(ActionLog.Action.ADDED, new HashSet<>(players));
         if (success) {
             send(DataHolder.ofSuccess("add"));
         } else {
@@ -106,8 +113,10 @@ public class PluginClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
+        failedTimes = 0;
+        reconnectDelay = baseReconnectDelay;
         Main.LOGGER.info("Connected to {}", getURI());
-        plugin.addLog(ActionLog.Action.CONNECT, new HashSet<>(0));
+        plugin.addLog(ActionLog.Action.CONNECTED, new HashSet<>(0));
         onInfo(null);
     }
 
@@ -135,24 +144,45 @@ public class PluginClient extends WebSocketClient {
         }
     }
 
-    public void reconnectOnClose(){
-        reconnect();
+    public void asyncReconnect(Runnable onReconnected){
+        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+            try {
+                reconnectBlocking();
+                if (getReadyState() == ReadyState.OPEN && onReconnected != null) {
+                    onReconnected.run();
+                }
+            } catch (InterruptedException ignored) {
+            }
+        }, reconnectDelay*20L);
+    }
+
+    private void recalculateDelay(){
+        reconnectDelay = (int) (reconnectDelay * reconnectMultiplier) * failedTimes;
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        failedTimes += 1;
+        recalculateDelay();
         if (CloseFrame.NEVER_CONNECTED == code) {
             Main.LOGGER.error("Failed to connect, reconnecting in {} seconds", reconnectDelay);
             plugin.addLog(ActionLog.Action.FAILED_TO_CONNECT, new HashSet<>(0));
         } else {
-            Main.LOGGER.info("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
+            if (reason != null && reason.isBlank()) {
+                Main.LOGGER.info("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
+            } else {
+                Main.LOGGER.info("Websocket closed with code {}, reconnecting in {} seconds", code, reconnectDelay);
+            }
             plugin.addLog(ActionLog.Action.DISCONNECTED, new HashSet<>(0));
         }
-        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this::reconnectOnClose, reconnectDelay*20L);
+        asyncReconnect(null);
     }
 
     @Override
     public void onError(Exception e) {
+        if (e instanceof ConnectException && e.getMessage().contains("getsockopt")) {
+            return;
+        }
         Main.LOGGER.error("Websocket error", e);
     }
 }

@@ -113,7 +113,8 @@ public final class Main extends JavaPlugin {
         }
         var timeout = getConfig().getInt("timeout", 5);
         var reconnectDelay = getConfig().getInt("reconnect-delay", 60);
-        ws = new PluginClient(this, uri, handler, timeout, reconnectDelay);
+        var reconnectMultiplier = Math.max(getConfig().getDouble("reconnect-multiplier", 1.3d), 1d);
+        ws = new PluginClient(this, uri, handler, timeout, reconnectDelay, reconnectMultiplier);
     }
 
     @Override
