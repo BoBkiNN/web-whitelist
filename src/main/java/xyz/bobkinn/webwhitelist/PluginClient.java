@@ -3,6 +3,7 @@ package xyz.bobkinn.webwhitelist;
 import com.google.gson.JsonSyntaxException;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.enums.ReadyState;
@@ -31,6 +32,7 @@ public class PluginClient extends WebSocketClient {
     private final double reconnectMultiplier;
     private int reconnectDelay;
     private int failedTimes = 0;
+    private BukkitTask reconnectTask = null;
 
     public PluginClient(Main plugin, URI uri, WhitelistHandler whitelist, int timeout, int baseReconnectDelay, double reconnectMultiplier) {
         super(uri, new Draft_6455(),null, (int) TimeUnit.SECONDS.toMillis(timeout));
@@ -146,7 +148,8 @@ public class PluginClient extends WebSocketClient {
     }
 
     public void asyncReconnect(Runnable onReconnected, Consumer<Long> onFail, boolean now){
-        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+        if (reconnectTask != null && !reconnectTask.isCancelled()) reconnectTask.cancel();
+        reconnectTask = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             try {
                 var start = System.currentTimeMillis();
                 reconnectBlocking();
