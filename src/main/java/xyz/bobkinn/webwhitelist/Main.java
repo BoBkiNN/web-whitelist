@@ -103,9 +103,9 @@ public final class Main extends JavaPlugin {
             throw new IllegalArgumentException("Failed to parse url");
         }
         try {
-            dateTimeFormatter = DateTimeFormatter.ofPattern(getConfig().getString("time-format", "dd-MM HH:mm:ss"));
+            dateTimeFormatter = DateTimeFormatter.ofPattern(getConfig().getString("time-format", "dd.MM HH:mm:ss"));
         } catch (Exception e) {
-            dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM HH:mm:ss");
+            dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM HH:mm:ss");
         }
         try {
             timeZone = ZoneId.of(getConfig().getString("time-zone", ZoneId.systemDefault().toString()));
