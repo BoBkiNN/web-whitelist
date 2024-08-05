@@ -33,6 +33,7 @@ S->C
 
 | field | field type | description  |
 |-------|------------|--------------|
+
 (`data` is empty)
 
 C->S
@@ -77,6 +78,7 @@ S->C
 
 | field | field type | description  |
 |-------|------------|--------------|
+
 (`data` is empty)
 
 C->S
