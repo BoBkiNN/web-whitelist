@@ -1,7 +1,6 @@
 package xyz.bobkinn.webwhitelist;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
@@ -24,7 +23,7 @@ public final class Main extends JavaPlugin {
     public static final LegacyComponentSerializer COMPONENT_SERIALIZER = LegacyComponentSerializer.builder()
             .hexColors().extractUrls().character('&').build();
     public static final TypeToken<Map<String, Object>> DATA_TYPETOKEN = new TypeToken<>(){};
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson GSON = new Gson();
 
     private WhitelistHandler handler = null;
     private PluginClient ws = null;

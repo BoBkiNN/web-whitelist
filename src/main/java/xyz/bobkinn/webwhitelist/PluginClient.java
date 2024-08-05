@@ -117,7 +117,6 @@ public class PluginClient extends WebSocketClient {
         try {
             holder = Main.GSON.fromJson(message, DataHolder.class);
         } catch (JsonSyntaxException e){
-            send(DataHolder.ofError("unknown", e));
             Main.LOGGER.error("Failed to parse received json", e);
             return;
         }
