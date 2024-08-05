@@ -68,7 +68,7 @@ public class PluginClient extends WebSocketClient {
         for (var p : players) {
             if (!whitelist.remove(p)) success = false;
         }
-        plugin.addLog(ModifyLog.Action.REMOVE, new HashSet<>(players));
+        plugin.addLog(ActionLog.Action.REMOVE, new HashSet<>(players));
         if (success) {
             send(DataHolder.ofSuccess("remove"));
         } else {
@@ -91,7 +91,7 @@ public class PluginClient extends WebSocketClient {
         for (var p : players) {
             if (!whitelist.add(p)) success = false;
         }
-        plugin.addLog(ModifyLog.Action.ADD, new HashSet<>(players));
+        plugin.addLog(ActionLog.Action.ADD, new HashSet<>(players));
         if (success) {
             send(DataHolder.ofSuccess("add"));
         } else {
@@ -107,7 +107,7 @@ public class PluginClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake handshake) {
         Main.LOGGER.info("Connected to {}", getURI());
-        plugin.addLog(ModifyLog.Action.CONNECT, new HashSet<>(0));
+        plugin.addLog(ActionLog.Action.CONNECT, new HashSet<>(0));
     }
 
     @Override
@@ -143,10 +143,10 @@ public class PluginClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         if (CloseFrame.NEVER_CONNECTED == code) {
             Main.LOGGER.error("Failed to connect, reconnecting in {} seconds", reconnectDelay);
-            plugin.addLog(ModifyLog.Action.FAILED_TO_CONNECT, new HashSet<>(0));
+            plugin.addLog(ActionLog.Action.FAILED_TO_CONNECT, new HashSet<>(0));
         } else {
             Main.LOGGER.info("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
-            plugin.addLog(ModifyLog.Action.DISCONNECTED, new HashSet<>(0));
+            plugin.addLog(ActionLog.Action.DISCONNECTED, new HashSet<>(0));
         }
         Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this::reconnectOnClose, reconnectDelay*20L);
     }

@@ -40,7 +40,7 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
 
 
 
-    public Component getLogText(ModifyLog log){
+    public Component getLogText(ActionLog log){
          final String additional;
          if (log.action().getAdditionalKey() != null) {
              additional = Main.replaceArgs(plugin.getRawTranslate(log.action().getAdditionalKey()), log.players());

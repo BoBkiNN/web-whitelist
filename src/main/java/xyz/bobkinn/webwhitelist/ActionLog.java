@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
 
-public record ModifyLog(long timestamp, Action action, Set<String> players) {
+public record ActionLog(long timestamp, Action action, Set<String> players) {
     @Getter
     @RequiredArgsConstructor
     public enum Action {

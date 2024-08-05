@@ -28,7 +28,7 @@ public final class Main extends JavaPlugin {
 
     private WhitelistHandler handler = null;
     private PluginClient ws = null;
-    private final RollingList<ModifyLog> logs = new RollingList<>(15);
+    private final RollingList<ActionLog> logs = new RollingList<>(15);
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM HH:mm:ss");
     private ZoneId timeZone = ZoneId.systemDefault();
 
@@ -45,8 +45,8 @@ public final class Main extends JavaPlugin {
         return formatMillis(millis, dateTimeFormatter, timeZone);
     }
 
-    public void addLog(ModifyLog.Action action, Set<String> players){
-        logs.add(new ModifyLog(System.currentTimeMillis(), action, players));
+    public void addLog(ActionLog.Action action, Set<String> players){
+        logs.add(new ActionLog(System.currentTimeMillis(), action, players));
     }
 
     public static String replaceArgs(String text, Object... args) {
