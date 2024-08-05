@@ -1,6 +1,5 @@
 url: ""
 timeout: 5 # 5 seconds
-additional-meta: true # plugin will send server metadata as headers
 reconnect-delay: 60 # 1 minute
 time-format: "dd-MM HH:mm:ss"
 time-zone: "Europe/Moscow"
