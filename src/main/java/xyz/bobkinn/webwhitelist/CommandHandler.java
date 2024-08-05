@@ -9,6 +9,7 @@ import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +42,11 @@ public class CommandHandler implements TabCompleter, CommandExecutor {
 
     public void reconnect(CommandSender sender){
         sender.sendMessage(plugin.getTranslate("reconnecting"));
-        plugin.getWs().asyncReconnect(() -> sender.sendMessage(plugin.getTranslate("reconnected")));
+        plugin.getWs().asyncReconnect(
+                () -> sender.sendMessage(plugin.getTranslate("reconnected")),
+                s -> sender.sendMessage(plugin.getTranslate("reconnect-failed", Duration.ofMillis(s).toSeconds())),
+                true
+        );
     }
 
     public Component getLogText(ActionLog log){

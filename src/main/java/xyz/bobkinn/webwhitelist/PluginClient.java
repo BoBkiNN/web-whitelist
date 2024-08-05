@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class PluginClient extends WebSocketClient {
 
@@ -144,16 +145,19 @@ public class PluginClient extends WebSocketClient {
         }
     }
 
-    public void asyncReconnect(Runnable onReconnected){
+    public void asyncReconnect(Runnable onReconnected, Consumer<Long> onFail, boolean now){
         Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             try {
+                var start = System.currentTimeMillis();
                 reconnectBlocking();
                 if (getReadyState() == ReadyState.OPEN && onReconnected != null) {
                     onReconnected.run();
+                } else if (onFail != null) {
+                    onFail.accept(System.currentTimeMillis()-start);
                 }
             } catch (InterruptedException ignored) {
             }
-        }, reconnectDelay*20L);
+        },  now ? 0 : reconnectDelay*20L);
     }
 
     private void recalculateDelay(){
@@ -176,7 +180,7 @@ public class PluginClient extends WebSocketClient {
             }
             plugin.addLog(ActionLog.Action.DISCONNECTED, new HashSet<>(0));
         }
-        asyncReconnect(null);
+        asyncReconnect(null, null, false);
     }
 
     @Override

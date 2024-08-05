@@ -16,3 +16,4 @@ messages:
   status-log-removed: " &a+{}"
   reconnecting: "&6Reconnecting.."
   reconnected: "&aReconnected!"
+  reconnect-failed: "&cFailed to reconnect after {} seconds"
