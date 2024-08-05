@@ -53,9 +53,10 @@ S->C
 
 C->S
 
-| field   | field type | description                            |
-|---------|------------|----------------------------------------|
-| success | bool       | true if all players added successfully |
+| field   | field type      | description                                                            |
+|---------|-----------------|------------------------------------------------------------------------|
+| success | bool            | true if all players added successfully                                 |
+| players | list of strings | players that were not added. <br/>Only exists when `sucess` is `false` |
 
 ### `remove` - Used to remove players from whitelist
 
@@ -68,9 +69,10 @@ S->C
 
 C->S
 
-| field   | field type | description                                |
-|---------|------------|--------------------------------------------|
-| success | bool       | `true` if all players removed successfully |
+| field   | field type      | description                                                              |
+|---------|-----------------|--------------------------------------------------------------------------|
+| success | bool            | `true` if all players removed successfully                               |
+| players | list of strings | players that were not removed. <br/>Only exists when `sucess` is `false` |
 
 ### `info` - Used to get info about server and plugin
 

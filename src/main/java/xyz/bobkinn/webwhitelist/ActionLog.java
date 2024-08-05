@@ -9,7 +9,9 @@ public record ActionLog(long timestamp, Action action, Set<String> players) {
     @Getter
     @RequiredArgsConstructor
     public enum Action {
-        ADDED, REMOVED, CONNECTED, DISCONNECTED, FAILED_TO_CONNECT;
+        ADDED("status-log-added"),
+        REMOVED("status-log-removed"),
+        CONNECTED, DISCONNECTED, FAILED_TO_CONNECT;
 
         private final String additionalKey;
 

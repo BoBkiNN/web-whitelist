@@ -13,7 +13,7 @@ messages:
   status-log-top: "&aLast 15 logs:"
   status-log-entry: "&7{} &8- &6{}{}" # time, type, additional
   status-log-added: " &a+{}"
-  status-log-removed: " &a+{}"
+  status-log-removed: " &c-{}"
   reconnecting: "&6Reconnecting.."
   reconnected: "&aReconnected!"
   reconnect-failed: "&cFailed to reconnect after {} seconds"
