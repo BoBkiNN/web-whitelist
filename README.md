@@ -21,7 +21,7 @@ All data is transferred as json and always has this map:
 `S->C` means from webserver to plugin, `C->S` means from plugin to webserver.
 
 When responding to messages, plugin adds `sucess` boolean field.
-if `sucess` value is `false`then there might be `error` field with error chain.
+if `sucess` value is `false`then there might be `errors` field with error chain.
 
 ### Message types
 
@@ -70,6 +70,30 @@ C->S
 | field   | field type | description                                |
 |---------|------------|--------------------------------------------|
 | success | bool       | `true` if all players removed successfully |
+
+### info - Used to get info about server and plugin
+
+S->C
+
+| field | field type | description  |
+|-------|------------|--------------|
+(`data` is empty)
+
+C->S
+
+| field          | field type      | description                 |
+|----------------|-----------------|-----------------------------|
+| plugin_version | string          | plugin version              |
+| players_online | list of strings | list of online player names |
+| handlers       | list of strings | list of message types       |
+| logs           | list of logs    | list of latest 15 logs      |
+
+### Log format
+| field     | field type           | description                                                                                               |
+|-----------|----------------------|-----------------------------------------------------------------------------------------------------------|
+| timestamp | long                 | log creation unix timestamp                                                                               |
+| action    | action               | action for this log.<br/>Might be one of: `ADD`, `REMOVE`, `CONNECT`, `DISCONNECTED`, `FAILED_TO_CONNECT` |
+| players   | list of player names | list of player names if `action` is `ADD` or `REMOVE`, else empty list                                    |
 
 ### Errors response
 When some message type cannot be processed or message type not found there will be errors with `success` set to `false`.

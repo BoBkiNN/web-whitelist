@@ -2,6 +2,7 @@ package xyz.bobkinn.webwhitelist;
 
 import com.google.gson.JsonSyntaxException;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.framing.CloseFrame;
@@ -34,6 +35,17 @@ public class PluginClient extends WebSocketClient {
         handlers.put("add", this::onAdd);
         handlers.put("remove", this::onRemove);
         handlers.put("list", this::onList);
+        handlers.put("info", this::onInfo);
+    }
+
+    public void onInfo(Map<String, Object> data){
+        var map = new HashMap<String, Object>();
+        //noinspection UnstableApiUsage
+        map.put("plugin_version", plugin.getPluginMeta().getVersion());
+        map.put("players_online", plugin.getServer().getOnlinePlayers().stream().map(Player::getName).toList());
+        map.put("handlers", handlers.keySet());
+        map.put("logs", plugin.getLogs());
+        send(DataHolder.ofSuccess("info", map));
     }
 
     public void onList(Map<String, Object> data) {
