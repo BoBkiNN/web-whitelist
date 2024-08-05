@@ -27,7 +27,7 @@ if `sucess` value is `false`then there might be `errors` field with error chain.
 
 Below tables are contents of `data` field in packet
 
-### list - Used to get list of whitelisted player
+### `list` - Used to get list of whitelisted player
 
 S->C
 
@@ -42,7 +42,7 @@ C->S
 |---------|-----------------|-----------------------------|
 | players | list of strings | list of whitelisted players |
 
-### add - Used to add players to whitelist
+### `add` - Used to add players to whitelist
 
 S->C
 
@@ -57,7 +57,7 @@ C->S
 |---------|------------|----------------------------------------|
 | success | bool       | true if all players added successfully |
 
-### remove - Used to remove players from whitelist
+### `remove` - Used to remove players from whitelist
 
 S->C
 
@@ -72,7 +72,7 @@ C->S
 |---------|------------|--------------------------------------------|
 | success | bool       | `true` if all players removed successfully |
 
-### info - Used to get info about server and plugin
+### `info` - Used to get info about server and plugin
 
 S->C
 
