@@ -11,17 +11,19 @@ This plugin downloads whitelist from url and adds players to ComfyWhitelist
 ## Protocol description:
 All data is transferred as json and always has this map:
 
-| field | field type | description  |
-|-------|------------|--------------|
-| type  | string     | message type |
-| data  | map        | message data |
+| field | field type | description                                  |
+|-------|------------|----------------------------------------------|
+| type  | string     | message type                                 |
+| id    | string     | unique message id. UUID v4 string by default |
+| data  | map        | message data                                 |
 
 `data` contains all other data that depends on `type`
  
 `S->C` means from webserver to plugin, `C->S` means from plugin to webserver.
 
-When responding to messages, plugin adds `sucess` boolean field.
+When responding to messages, plugin always adds `sucess` boolean field.
 if `sucess` value is `false`then there might be `errors` field with error chain.
+Note that below tables can contain detailed description of this field
 
 ### Message types
 
@@ -92,6 +94,15 @@ C->S
 | handlers       | list of strings | list of message types       |
 | logs           | list of logs    | list of latest 15 logs      |
 
+### `unknown` - Only sent when message type from server is not defined on client, always unsuccessful
+
+C->S
+
+| field | field type | description  |
+|-------|------------|--------------|
+
+(`data` is empty)
+
 ### Log format
 | field     | field type           | description                                                                                                    |
 |-----------|----------------------|----------------------------------------------------------------------------------------------------------------|
@@ -109,5 +120,3 @@ Error format:
 |-------|------------|-------------------------|
 | type  | string     | java class of exception |
 | msg   | string     | error message           |
-
-If json cannot be parsed or this type of message doesn't exist then message type is set to `unknown`

@@ -3,25 +3,41 @@ package xyz.bobkinn.webwhitelist;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @RequiredArgsConstructor
-public class DataHolder {
+public class DataHolder implements MessageInfo {
     private final String type;
+    private final String id;
     private final Map<String, Object> data;
 
-    public static DataHolder ofSuccess(String type){
-        return new DataHolder(type, Map.of("success", true));
+    /**
+     * Generates new data holder with random id and desired type
+     * @param type message type
+     * @return new data holder
+     */
+    public static DataHolder newEmpty(String type){
+        var id = UUID.randomUUID();
+        return new DataHolder(type, id.toString(), Map.of());
     }
 
-    public static DataHolder ofSuccess(String type, Map<String, Object> payload){
+    public static DataHolder ofSuccess(String type, String id){
+        return new DataHolder(type, id, Map.of("success", true));
+    }
+
+    public static DataHolder ofSuccess(MessageInfo request){
+        return ofSuccess(request.getType(), request.getId());
+    }
+
+    public static DataHolder ofSuccess(MessageInfo request, Map<String, Object> payload){
+        return ofSuccess(request.getType(), request.getId(), payload);
+    }
+
+    public static DataHolder ofSuccess(String type, String id, Map<String, Object> payload){
         Map<String, Object> data = new HashMap<>(payload);
         data.put("success", true);
-        return new DataHolder(type, data);
+        return new DataHolder(type, id, data);
     }
 
     private static void recurseException(Throwable t, List<Map<String, Object>> ls, int depth){
@@ -38,15 +54,27 @@ public class DataHolder {
         }
     }
 
-    public static DataHolder ofError(String type, Exception e, Map<String, Object> extra){
-        return ofError(type, e, true, extra);
+    public static DataHolder ofError(String type, String id, Exception e, Map<String, Object> extra){
+        return ofError(type, id, e, true, extra);
     }
 
-    public static DataHolder ofError(String type, Exception e){
-        return ofError(type, e, true, Map.of());
+    public static DataHolder ofError(MessageInfo request, Exception e, Map<String, Object> extra){
+        return ofError(request, e, true, extra);
     }
 
-    public static DataHolder ofError(String type, Exception e, boolean recurse, Map<String, Object> extra){
+    public static DataHolder ofError(MessageInfo request, Exception e){
+        return ofError(request.getType(), request.getId(), e);
+    }
+
+    public static DataHolder ofError(String type, String id, Exception e){
+        return ofError(type, id, e, Map.of());
+    }
+
+    public static DataHolder ofError(MessageInfo request, Exception e, boolean recurse, Map<String, Object> extra){
+        return ofError(request.getType(), request.getId(), e, recurse, extra);
+    }
+
+    public static DataHolder ofError(String type, String id, Exception e, boolean recurse, Map<String, Object> extra){
         var map = new HashMap<>(extra);
         map.put("success", false);
         if (e != null) {
@@ -54,6 +82,6 @@ public class DataHolder {
             recurseException(e, errors, recurse ? 0 : -1);
             map.put("errors", errors);
         }
-        return new DataHolder(type, map);
+        return new DataHolder(type, id, map);
     }
 }

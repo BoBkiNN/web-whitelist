@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 public class PluginClient extends WebSocketClient {
 
     public interface MessageHandler {
-        void handle(Map<String, Object> data);
+        void handle(Map<String, Object> data, MessageInfo msg);
     }
 
     private final Map<String, MessageHandler> handlers;
@@ -49,22 +49,22 @@ public class PluginClient extends WebSocketClient {
         handlers.put("info", this::onInfo);
     }
 
-    public void onInfo(Map<String, Object> data){
+    public void onInfo(Map<String, Object> data, MessageInfo msg){
         var map = new HashMap<String, Object>();
         //noinspection UnstableApiUsage
         map.put("plugin_version", plugin.getPluginMeta().getVersion());
         map.put("players_online", plugin.getServer().getOnlinePlayers().stream().map(Player::getName).toList());
         map.put("handlers", handlers.keySet());
         map.put("logs", plugin.getLogs());
-        send(DataHolder.ofSuccess("info", map));
+        send(DataHolder.ofSuccess(msg, map));
     }
 
-    public void onList(Map<String, Object> data) {
+    public void onList(Map<String, Object> data, MessageInfo msg) {
         var players = whitelist.asList();
-        send(DataHolder.ofSuccess("list", Map.of("players", players)));
+        send(DataHolder.ofSuccess(msg, Map.of("players", players)));
     }
 
-    public void onRemove(Map<String, Object> data) {
+    public void onRemove(Map<String, Object> data, MessageInfo msg) {
         final List<String> players;
         try {
             //noinspection unchecked
@@ -85,15 +85,15 @@ public class PluginClient extends WebSocketClient {
         modList.removeAll(failed);
         plugin.addLog(ActionLog.Action.REMOVED, new HashSet<>(modList));
         if (failed.isEmpty()) {
-            send(DataHolder.ofSuccess("remove"));
+            send(DataHolder.ofSuccess(msg));
         } else {
             var e = new IllegalStateException("Failed to remove some players to whitelist");
-            send(DataHolder.ofError("remove", e, Map.of("players", failed)));
+            send(DataHolder.ofError(msg, e, Map.of("players", failed)));
             Main.LOGGER.warn("Failed to remove some players to whitelist: {}", failed);
         }
     }
 
-    public void onAdd(Map<String, Object> data){
+    public void onAdd(Map<String, Object> data, MessageInfo msg){
         final List<String> players;
         try {
             //noinspection unchecked
@@ -114,10 +114,10 @@ public class PluginClient extends WebSocketClient {
         modList.removeAll(failed);
         plugin.addLog(ActionLog.Action.ADDED, new HashSet<>(modList));
         if (failed.isEmpty()) {
-            send(DataHolder.ofSuccess("add"));
+            send(DataHolder.ofSuccess(msg));
         } else {
             var e = new IllegalStateException("Failed to add some players to whitelist");
-            send(DataHolder.ofError("add", e, Map.of("players", failed)));
+            send(DataHolder.ofError(msg, e, Map.of("players", failed)));
             Main.LOGGER.warn("Failed to add some players to whitelist: {}", failed);
         }
     }
@@ -133,7 +133,7 @@ public class PluginClient extends WebSocketClient {
         reconnectDelay = baseReconnectDelay;
         Main.LOGGER.info("Connected to {}", getURI());
         plugin.addLog(ActionLog.Action.CONNECTED, new HashSet<>(0));
-        onInfo(null);
+        onInfo(null, DataHolder.newEmpty("info"));
     }
 
     @Override
@@ -148,14 +148,14 @@ public class PluginClient extends WebSocketClient {
         String type = holder.getType();
         var handler = handlers.get(type);
         if (handler == null) {
-            send(DataHolder.ofError("unknown", new IllegalArgumentException("unknown type '"+type+"'")));
+            send(DataHolder.ofError("unknown", holder.getId(), new IllegalArgumentException("unknown type '"+type+"'")));
             Main.LOGGER.error("Unknown message type received: {}", type);
             return;
         }
         try {
-            handler.handle(holder.getData());
+            handler.handle(holder.getData(), holder);
         } catch (Exception e){
-            send(DataHolder.ofError(type, e));
+            send(DataHolder.ofError(holder, e));
             Main.LOGGER.error("Failed to handle message '{}'", type, e);
         }
     }
