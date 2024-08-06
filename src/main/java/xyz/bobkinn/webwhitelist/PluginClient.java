@@ -1,6 +1,8 @@
 package xyz.bobkinn.webwhitelist;
 
 import com.google.gson.JsonSyntaxException;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -30,6 +32,8 @@ public class PluginClient extends WebSocketClient {
     private int reconnectDelay;
     private int failedTimes = 0;
     private BukkitTask reconnectTask = null;
+    @Getter @Setter
+    private boolean stopping = false;
 
     public PluginClient(Main plugin, URI uri, WhitelistHandler whitelist, int timeout, int baseReconnectDelay, double reconnectMultiplier) {
         super(uri, new Draft_6455(),null, (int) TimeUnit.SECONDS.toMillis(timeout));
@@ -186,13 +190,32 @@ public class PluginClient extends WebSocketClient {
             plugin.addLog(ActionLog.Action.FAILED_TO_CONNECT, new HashSet<>(0));
         } else {
             if (reason != null && !reason.isBlank()) {
-                Main.LOGGER.warn("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
+                if (stopping) {
+                    Main.LOGGER.info("Websocket closed with code {} ({})", code, reason);
+                } else {
+                    Main.LOGGER.warn("Websocket closed with code {} ({}), reconnecting in {} seconds", code, reason, reconnectDelay);
+                }
             } else {
-                Main.LOGGER.warn("Websocket closed with code {}, reconnecting in {} seconds", code, reconnectDelay);
+                if (stopping) {
+                    Main.LOGGER.info("Websocket closed with code {}", code);
+                } else {
+                    Main.LOGGER.warn("Websocket closed with code {}, reconnecting in {} seconds", code, reconnectDelay);
+                }
             }
             plugin.addLog(ActionLog.Action.DISCONNECTED, new HashSet<>(0));
         }
-        asyncReconnect(null, null, false);
+        if (!stopping) asyncReconnect(null, null, false);
+    }
+
+    public void stop(){
+        setStopping(true);
+        try {
+            if (reconnectTask != null) reconnectTask.cancel();
+            if (!isClosed()) closeBlocking();
+            setStopping(false);
+        } catch (Exception e) {
+            Main.LOGGER.error("Failed to close websocket", e);
+        }
     }
 
     @Override

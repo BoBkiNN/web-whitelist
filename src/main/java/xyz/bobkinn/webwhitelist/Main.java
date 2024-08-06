@@ -139,12 +139,8 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (ws != null && ws.isOpen()) {
-            try {
-                ws.closeBlocking();
-            } catch (Exception e) {
-                LOGGER.error("Failed to close websocket connection", e);
-            }
+        if (ws != null) {
+            ws.stop();
         }
     }
 }
