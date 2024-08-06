@@ -12,8 +12,12 @@ public class DataHolder implements MessageInfo {
     private final String id;
     private final Map<String, Object> data;
 
+    // fields that persist only on sending
+    private Boolean success = null;
+    private List<Map<String, Object>> errors = null;
+
     /**
-     * Generates new data holder with random id and desired type
+     * Generates new data holder with random id and desired type. Note that state is not success
      * @param type message type
      * @return new data holder
      */
@@ -23,7 +27,7 @@ public class DataHolder implements MessageInfo {
     }
 
     public static DataHolder ofSuccess(String type, String id){
-        return new DataHolder(type, id, Map.of("success", true));
+        return ofSuccess(type, id, Map.of());
     }
 
     public static DataHolder ofSuccess(MessageInfo request){
@@ -35,9 +39,9 @@ public class DataHolder implements MessageInfo {
     }
 
     public static DataHolder ofSuccess(String type, String id, Map<String, Object> payload){
-        Map<String, Object> data = new HashMap<>(payload);
-        data.put("success", true);
-        return new DataHolder(type, id, data);
+        var ret = new DataHolder(type, id, payload);
+        ret.success = true;
+        return ret;
     }
 
     private static void recurseException(Throwable t, List<Map<String, Object>> ls, int depth){
@@ -75,13 +79,13 @@ public class DataHolder implements MessageInfo {
     }
 
     public static DataHolder ofError(String type, String id, Exception e, boolean recurse, Map<String, Object> extra){
-        var map = new HashMap<>(extra);
-        map.put("success", false);
+        var ret = new DataHolder(type, id, extra);
+        ret.success = false;
         if (e != null) {
             var errors = new ArrayList<Map<String, Object>>();
             recurseException(e, errors, recurse ? 0 : -1);
-            map.put("errors", errors);
+            ret.errors = errors;
         }
-        return new DataHolder(type, id, map);
+        return ret;
     }
 }
