@@ -6,7 +6,7 @@
 
   <groupId>xyz.bobkinn</groupId>
   <artifactId>web-whitelist</artifactId>
-  <version>2.3.43</version>
+  <version>2.3.46</version>
   <packaging>jar</packaging>
 
   <name>web-whitelist</name>
@@ -93,6 +93,16 @@
           <artifactId>comfy-whitelist-api</artifactId>
           <version>1.0.0</version>
           <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>com.github.BoBkiNN.indigodataio</groupId>
+          <artifactId>indigodataio</artifactId>
+          <version>3.0.3</version>
+      </dependency>
+      <dependency>
+          <groupId>com.github.BoBkiNN.indigodataio</groupId>
+          <artifactId>indigodataio-gson</artifactId>
+          <version>3.0.3</version>
       </dependency>
   </dependencies>
 </project>

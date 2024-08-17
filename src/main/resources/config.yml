@@ -5,6 +5,8 @@ reconnect-multiplier: 1.3
 time-format: "dd.MM HH:mm:ss"
 time-zone: "Europe/Moscow"
 
+additional-types: true
+
 messages:
   reload-failed: "&cFailed to reload: {}"
   reload-success: "&aSuccessfully reloaded"

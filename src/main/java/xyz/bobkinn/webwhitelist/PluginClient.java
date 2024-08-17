@@ -1,5 +1,6 @@
 package xyz.bobkinn.webwhitelist;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.enums.ReadyState;
 import org.java_websocket.framing.CloseFrame;
 import org.java_websocket.handshake.ServerHandshake;
+import xyz.bobkinn.indigodataio.gson.GsonData;
 
 import java.net.ConnectException;
 import java.net.URI;
@@ -19,10 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class PluginClient extends WebSocketClient {
-
-    public interface MessageHandler {
-        void handle(Map<String, Object> data, MessageInfo msg);
-    }
 
     private final Map<String, MessageHandler> handlers;
     private final WhitelistHandler whitelist;
@@ -49,29 +47,33 @@ public class PluginClient extends WebSocketClient {
         handlers.put("info", this::onInfo);
     }
 
-    public void onInfo(Map<String, Object> data, MessageInfo msg){
-        var map = new HashMap<String, Object>();
+    public void registerHandler(String id, MessageHandler handler){
+        handlers.put(id, handler);
+    }
+
+    private static List<GsonData> writeLogs(List<ActionLog> logs){
+        return logs.stream().map(Main.GSON::toJsonTree).map(JsonElement::getAsJsonObject).map(GsonData::new).toList();
+    }
+
+    public void onInfo(GsonData data, MessageInfo msg){
+        var map = new GsonData();
         //noinspection UnstableApiUsage
-        map.put("plugin_version", plugin.getPluginMeta().getVersion());
-        map.put("players_online", plugin.getServer().getOnlinePlayers().stream().map(Player::getName).toList());
-        map.put("handlers", handlers.keySet());
-        map.put("logs", plugin.getLogs());
+        map.putString("plugin_version", plugin.getPluginMeta().getVersion());
+        map.putStringList("players_online", plugin.getServer().getOnlinePlayers().stream().map(Player::getName).toList());
+        map.putStringList("handlers", new ArrayList<>(handlers.keySet()));
+        map.putSectionList("logs", writeLogs(plugin.getLogs()));
         send(DataHolder.ofSuccess(msg, map));
     }
 
-    public void onList(Map<String, Object> data, MessageInfo msg) {
+    public void onList(GsonData data, MessageInfo msg) {
         var players = whitelist.asList();
-        send(DataHolder.ofSuccess(msg, Map.of("players", players)));
+        var r = new GsonData();
+        r.putStringList("players", players.stream().toList());
+        send(DataHolder.ofSuccess(msg, r));
     }
 
-    public void onRemove(Map<String, Object> data, MessageInfo msg) {
-        final List<String> players;
-        try {
-            //noinspection unchecked
-            players = (List<String>) data.get("players");
-        } catch (Exception e) {
-            throw new IllegalArgumentException("players field not found or not a list");
-        }
+    public void onRemove(GsonData data, MessageInfo msg) {
+        final List<String> players = data.getStringList("players");
         if (players == null) {
             throw new IllegalArgumentException("players field not found");
         }
@@ -88,19 +90,15 @@ public class PluginClient extends WebSocketClient {
             send(DataHolder.ofSuccess(msg));
         } else {
             var e = new IllegalStateException("Failed to remove some players to whitelist");
-            send(DataHolder.ofError(msg, e, Map.of("players", failed)));
+            var r = new GsonData();
+            r.putStringList("players", failed);
+            send(DataHolder.ofError(msg, e, r));
             Main.LOGGER.warn("Failed to remove some players to whitelist: {}", failed);
         }
     }
 
-    public void onAdd(Map<String, Object> data, MessageInfo msg){
-        final List<String> players;
-        try {
-            //noinspection unchecked
-            players = (List<String>) data.get("players");
-        } catch (Exception e) {
-            throw new IllegalArgumentException("players field not found or not a list");
-        }
+    public void onAdd(GsonData data, MessageInfo msg){
+        final List<String> players = data.getStringList("players");
         if (players == null) {
             throw new IllegalArgumentException("players field not found");
         }
@@ -117,7 +115,9 @@ public class PluginClient extends WebSocketClient {
             send(DataHolder.ofSuccess(msg));
         } else {
             var e = new IllegalStateException("Failed to add some players to whitelist");
-            send(DataHolder.ofError(msg, e, Map.of("players", failed)));
+            var r = new GsonData();
+            r.putStringList("players", failed);
+            send(DataHolder.ofError(msg, e, r));
             Main.LOGGER.warn("Failed to add some players to whitelist: {}", failed);
         }
     }

@@ -1,20 +1,21 @@
 package xyz.bobkinn.webwhitelist;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.bobkinn.indigodataio.gson.GsonData;
+import xyz.bobkinn.indigodataio.gson.io.JsonIo;
 
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -22,8 +23,9 @@ public final class Main extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("WebWhitelist");
     public static final LegacyComponentSerializer COMPONENT_SERIALIZER = LegacyComponentSerializer.builder()
             .hexColors().extractUrls().character('&').build();
-    public static final TypeToken<Map<String, Object>> DATA_TYPETOKEN = new TypeToken<>(){};
-    public static final Gson GSON = new Gson();
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(GsonData.class, new JsonIo.GsonDataAdapter())
+            .create();
 
     private WhitelistHandler handler = null;
     private PluginClient ws = null;
@@ -115,6 +117,10 @@ public final class Main extends JavaPlugin {
         var reconnectDelay = getConfig().getInt("reconnect-delay", 60);
         var reconnectMultiplier = Math.max(getConfig().getDouble("reconnect-multiplier", 1.3d), 1d);
         ws = new PluginClient(this, uri, handler, timeout, reconnectDelay, reconnectMultiplier);
+        var additionalTypes = getConfig().getBoolean("additional-types", true);
+        if (additionalTypes) {
+            new AdditionalHandlers(ws).registerAll();
+        }
     }
 
     @Override
