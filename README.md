@@ -94,6 +94,25 @@ C->S
 | handlers       | list of strings | list of message types       |
 | logs           | list of logs    | list of latest 15 logs      |
 
+### `kick` - Used to kick player. 
+Only enabled if `additional-types` is set to `true` in config.yml
+
+S->C
+
+| field          | field type                  | description                                                                                      |
+|----------------|-----------------------------|--------------------------------------------------------------------------------------------------|
+| player         | string                      | player name to kick                                                                              |
+| message        | depends on `message_format` | message to kick player with. (Optional)                                                          |
+| message_format | string                      | type of message to parse from `message` field.<br/>Must be `minimessage` or `legacy`. (Optional) |
+
+
+C->S
+
+| field          | field type      | description                 |
+|----------------|-----------------|-----------------------------|
+
+(`data` is empty)
+
 ### `unknown` - Only sent when message type from server is not defined on client, always unsuccessful
 
 C->S

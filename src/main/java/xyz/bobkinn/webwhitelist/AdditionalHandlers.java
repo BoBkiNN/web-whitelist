@@ -1,8 +1,7 @@
 package xyz.bobkinn.webwhitelist;
 
-import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import xyz.bobkinn.indigodataio.gson.GsonData;
 
@@ -26,24 +25,33 @@ public class AdditionalHandlers {
         if (playerName == null) {
             throw new IllegalArgumentException("player field not found");
         }
-        var message = readComponent(data.getObject("message", null));
-        if (message == null) {
-            throw new IllegalArgumentException("message is not a component");
-        }
         var player = Bukkit.getPlayer(playerName);
         if (player == null || !player.isOnline()) {
             throw new IllegalArgumentException("Player not found or offline");
         }
-        player.kick(message);
+        var messageFormat = data.getString("message_format", "minimessage");
+        final Component message;
+        if (messageFormat.equalsIgnoreCase("minimessage")) {
+            message = readMiniMessage(data.getString("message"));
+        } else {
+            var text = data.getString("message");
+            if (text != null) {
+                message = Main.COMPONENT_SERIALIZER.deserialize(text);
+            } else message = null;
+        }
+        Bukkit.getScheduler().runTaskLater(ws.getPlugin(), () -> {
+            if (message != null) player.kick(message);
+            else player.kick();
+        }, 0);
         ws.send(DataHolder.ofSuccess(msg));
     }
 
-    public static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
+    public static final MiniMessage MM_COMPONENT_SERIALIZER = MiniMessage.miniMessage();
 
-    public static Component readComponent(JsonElement e){
-        if (e == null) return null;
+    public static Component readMiniMessage(String s){
+        if (s == null) return null;
         try {
-            return GSON_COMPONENT_SERIALIZER.deserializeFromTree(e);
+            return MM_COMPONENT_SERIALIZER.deserialize(s);
         } catch (Exception ex) {
             return null;
         }

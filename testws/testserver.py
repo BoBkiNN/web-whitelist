@@ -118,5 +118,16 @@ def do_remove(player: str):
     return f"sent {msg}"
 
 
+@app.route("/kick/<player>")
+def do_kick(player: str):
+    kick_text = "<color:#ff857a><i>ME</i><b>OOO<st>OO</st></b><u>W</u></color>"
+    msg = wlproto.Kick.new(player, kick_text)
+    s = servers.get("main", None)
+    if s is None:
+        return "Server not connected"
+    s.send_msg(msg)
+    return f"sent {msg}"
+
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

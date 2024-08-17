@@ -260,11 +260,44 @@ class Unknown(Message):
     def __init__(self, meta: MessageMeta, data: dict):
         super().__init__(meta)
 
+class TextFormat(Enum):
+    MINIMESSAGE = "minimessage"
+    """https://webui.advntr.dev"""
+    LEGACY = "legacy"
+    """&cRed text and etc"""
+
+class Kick(Message):
+
+    @classmethod
+    def new(cls, player: str, text: str | None = None, format: TextFormat = TextFormat.MINIMESSAGE):
+        return cls(MessageMeta.of(cls), player=player, msg=text, message_format = format)
+
+    def __init__(self, meta: MessageMeta, data: dict | None = None, 
+                 player: str | None = None, msg: str | None = None, message_format: TextFormat = TextFormat.MINIMESSAGE):
+        super().__init__(meta)
+        if data is None and player is not None:
+            self.player = player
+            self.msg = msg
+            self.message_format = message_format
+        elif data is not None:
+            self.player = None
+            self.msg = None
+            self.message_format = TextFormat.MINIMESSAGE
+        else:
+            raise ValueError("not a read; not a construct")
+    
+    def write(self, data: dict):
+        data["player"] = self.player
+        if self.msg is not None:
+            data["message"] = self.msg
+            if self.message_format is not None:
+                data["message_format"] = self.message_format.value
 
 TYPES: dict[str, type[Message]] = {
     "info": Info,
     "list": List,
     "add": Add,
     "remove": Remove,
-    "unknown": Unknown
+    "unknown": Unknown,
+    "kick": Kick
 }

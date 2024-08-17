@@ -24,6 +24,7 @@ public class PluginClient extends WebSocketClient {
 
     private final Map<String, MessageHandler> handlers;
     private final WhitelistHandler whitelist;
+    @Getter
     private final Main plugin;
     private final int baseReconnectDelay; // seconds
     private final double reconnectMultiplier;
